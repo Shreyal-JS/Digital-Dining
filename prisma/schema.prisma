@@ -1,0 +1,256 @@
+// SilvyOS — Digital Restaurant Menu Platform Database Schema
+// Spec: Section 8 (Menu Data Model) & Section 9 (Multi-Tenant Security)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RESTAURANT_ADMIN
+  RESTAURANT_STAFF
+  SUPER_ADMIN
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum QrCodeStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum DietaryType {
+  VEGETARIAN
+  NON_VEGETARIAN
+  VEGAN
+  EGGETARIAN
+  OTHER
+}
+
+// -----------------------------------------------------------------------------
+// Restaurant Model (Multi-tenant root)
+// -----------------------------------------------------------------------------
+model Restaurant {
+  id              String        @id @default(uuid())
+  name            String
+  slug            String        @unique
+  logoUrl         String?       @map("logo_url")
+  description     String?
+  address         String?
+  phone           String?
+  email           String?
+  defaultLanguage String        @default("en") @map("default_language")
+  currency        String        @default("USD")
+  status          EntityStatus  @default(ACTIVE)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  users           User[]
+  categories      Category[]
+  dishes          Dish[]
+  translations    RestaurantTranslation[]
+  qrCodes         QrCode[]
+  feedback        Feedback[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("restaurants")
+}
+
+// -----------------------------------------------------------------------------
+// User Model (Authenticated Dashboard Users)
+// -----------------------------------------------------------------------------
+model User {
+  id           String       @id @default(uuid())
+  restaurantId String?      @map("restaurant_id") // Nullable for SUPER_ADMIN
+  name         String
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  role         Role         @default(RESTAURANT_STAFF)
+  status       EntityStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  restaurant   Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------------
+// Category Model
+// -----------------------------------------------------------------------------
+model Category {
+  id           String       @id @default(uuid())
+  restaurantId String       @map("restaurant_id")
+  name         String
+  description  String?
+  displayOrder Int          @default(0) @map("display_order")
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dishes       Dish[]
+  translations CategoryTranslation[]
+  analytics    AnalyticsEvent[]
+
+  @@index([restaurantId])
+  @@index([restaurantId, displayOrder])
+  @@map("categories")
+}
+
+// -----------------------------------------------------------------------------
+// Dish Model
+// -----------------------------------------------------------------------------
+model Dish {
+  id           String       @id @default(uuid())
+  restaurantId String       @map("restaurant_id")
+  categoryId   String       @map("category_id")
+  name         String
+  description  String?
+  price        Decimal      @db.Decimal(10, 2)
+  portion      String?
+  ingredients  String?
+  allergens    String?
+  dietaryType  DietaryType  @default(VEGETARIAN) @map("dietary_type")
+  imageUrl     String?      @map("image_url")
+  model3dUrl   String?      @map("model_3d_url")
+  arEnabled    Boolean      @default(false) @map("ar_enabled")
+  isAvailable  Boolean      @default(true) @map("is_available")
+  displayOrder Int          @default(0) @map("display_order")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations DishTranslation[]
+  feedback     Feedback[]
+  analytics    AnalyticsEvent[]
+
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@index([restaurantId, isAvailable])
+  @@map("dishes")
+}
+
+// -----------------------------------------------------------------------------
+// Dish Translations Model
+// -----------------------------------------------------------------------------
+model DishTranslation {
+  id           String   @id @default(uuid())
+  dishId       String   @map("dish_id")
+  languageCode String   @map("language_code")
+  name         String
+  description  String?
+  ingredients  String?
+  allergens    String?
+  portion      String?
+
+  dish         Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, languageCode])
+  @@index([dishId])
+  @@map("dish_translations")
+}
+
+// -----------------------------------------------------------------------------
+// Category Translations Model
+// -----------------------------------------------------------------------------
+model CategoryTranslation {
+  id           String   @id @default(uuid())
+  categoryId   String   @map("category_id")
+  languageCode String   @map("language_code")
+  name         String
+  description  String?
+
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, languageCode])
+  @@index([categoryId])
+  @@map("category_translations")
+}
+
+// -----------------------------------------------------------------------------
+// Restaurant Translations Model
+// -----------------------------------------------------------------------------
+model RestaurantTranslation {
+  id           String     @id @default(uuid())
+  restaurantId String     @map("restaurant_id")
+  languageCode String     @map("language_code")
+  description  String?
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, languageCode])
+  @@index([restaurantId])
+  @@map("restaurant_translations")
+}
+
+// -----------------------------------------------------------------------------
+// QR Codes Model
+// -----------------------------------------------------------------------------
+model QrCode {
+  id             String       @id @default(uuid())
+  restaurantId   String       @map("restaurant_id")
+  identifier     String       @unique
+  destinationUrl String       @map("destination_url")
+  status         QrCodeStatus @default(ACTIVE)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  restaurant     Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@map("qr_codes")
+}
+
+// -----------------------------------------------------------------------------
+// Feedback Model
+// -----------------------------------------------------------------------------
+model Feedback {
+  id           String     @id @default(uuid())
+  restaurantId String     @map("restaurant_id")
+  dishId       String?    @map("dish_id")
+  rating       Int        // 1 to 5
+  comment      String?
+  languageCode String     @default("en") @map("language_code")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dish         Dish?      @relation(fields: [dishId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId])
+  @@index([dishId])
+  @@map("feedback")
+}
+
+// -----------------------------------------------------------------------------
+// Analytics Events Model
+// -----------------------------------------------------------------------------
+model AnalyticsEvent {
+  id           String     @id @default(uuid())
+  restaurantId String     @map("restaurant_id")
+  dishId       String?    @map("dish_id")
+  categoryId   String?    @map("category_id")
+  eventType    String     @map("event_type") // menu_view, category_view, dish_view, ar_launch, model_3d_view, language_change, feedback_submit
+  sessionId    String     @map("session_id")
+  languageCode String?    @map("language_code")
+  metadata     Json?
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dish         Dish?      @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  category     Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, eventType])
+  @@index([restaurantId, createdAt])
+  @@map("analytics_events")
+}
