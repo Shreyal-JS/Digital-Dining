@@ -32,8 +32,8 @@ export default function CustomerMenuPage({ params }: PageProps) {
         const json = await res.json();
         if (json.success) {
           setMenuData(json.data);
-          if (json.data.categories.length > 0 && !activeCategoryId) {
-            setActiveCategoryId(json.data.categories[0].id);
+          if (json.data.categories.length > 0) {
+            setActiveCategoryId((prev) => (prev ? prev : json.data.categories[0].id));
           }
 
           // Track menu_view analytics event (Spec Section 15)
