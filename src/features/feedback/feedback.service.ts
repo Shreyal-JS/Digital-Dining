@@ -30,6 +30,25 @@ export class FeedbackServiceStub implements IFeedbackService {
       return dishId ? matchRest && f.dishId === dishId : matchRest;
     });
   }
+
+  async addStaffReply(restaurantId: string, feedbackId: string, reply: import("@/types").FeedbackReply): Promise<Feedback> {
+    const feedback = this.feedbackList.find((f) => f.id === feedbackId && f.restaurantId === restaurantId);
+    if (!feedback) {
+      throw new Error("Feedback record not found or does not belong to restaurant");
+    }
+
+    if (!feedback.staffReplies) {
+      feedback.staffReplies = [];
+    }
+
+    feedback.staffReplies.push({
+      ...reply,
+      id: `rep_${Date.now()}`,
+      createdAt: new Date(),
+    });
+
+    return feedback;
+  }
 }
 
 export const feedbackService: IFeedbackService = new FeedbackServiceStub();

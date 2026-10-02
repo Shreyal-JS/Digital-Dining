@@ -1,4 +1,4 @@
-import { Feedback } from "@/types";
+import { Feedback, FeedbackReply } from "@/types";
 
 export interface CreateFeedbackDTO {
   restaurantId: string;
@@ -11,4 +11,5 @@ export interface CreateFeedbackDTO {
 export interface IFeedbackService {
   submitFeedback(dto: CreateFeedbackDTO): Promise<Feedback>;
   listFeedback(restaurantId: string, dishId?: string): Promise<Feedback[]>;
+  addStaffReply(restaurantId: string, feedbackId: string, reply: FeedbackReply): Promise<Feedback>;
 }
