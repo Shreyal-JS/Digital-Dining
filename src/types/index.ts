@@ -118,6 +118,14 @@ export interface QrCode {
   createdAt: Date;
 }
 
+export interface FeedbackReply {
+  id?: string;
+  text: string;
+  author: string;
+  createdAt: Date;
+  isInternalNote?: boolean;
+}
+
 export interface Feedback {
   id: string;
   restaurantId: string;
@@ -126,6 +134,12 @@ export interface Feedback {
   comment?: string | null;
   languageCode: string;
   createdAt: Date;
+  dinerName?: string;
+  verifiedDineIn?: boolean;
+  tags?: string[];
+  sentiment?: "POSITIVE" | "NEUTRAL" | "CRITICAL";
+  arMention?: boolean;
+  staffReplies?: FeedbackReply[];
 }
 
 export interface AnalyticsEvent {
