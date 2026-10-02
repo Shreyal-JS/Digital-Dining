@@ -26,7 +26,7 @@
 | **6. 3D Viewer & Augmented Reality (AR)** | 🔄 In Progress | 75% | Validation & `<model-viewer>` AR working; USDZ pipeline pending |
 | **7. Media & Asset Storage Service** | 🔄 In Progress | 60% | Local filesystem storage active; S3/R2 cloud driver pending |
 | **8. Menu & Category Management (API/Logic)** | ✅ Completed | 90% | Domain service stubs & full REST CRUD routes active |
-| **9. Restaurant Owner Dashboard (UI)** | 🔄 In Progress | 35% | Overview metrics page done; dedicated management pages pending |
+| **9. Restaurant Owner Dashboard (UI)** | 🔄 In Progress | 55% | Overview metrics & Menu Dishes management pages done |
 | **10. Dynamic QR Code Infrastructure** | 🔄 In Progress | 50% | Route architecture & stubs done; SVG/PNG generator pending |
 | **11. Customer Feedback & Reviews** | 🔄 In Progress | 75% | Feedback modal, spam throttling & API done; admin view pending |
 | **12. Telemetry & Analytics Engine** | 🔄 In Progress | 70% | Ingestion route & metrics aggregator done; detailed UI pending |
@@ -158,12 +158,15 @@
 - [x] Dashboard Overview page (`/dashboard`) with real-time KPI cards
 - [x] Top viewed dishes ranking table
 - [x] Quick actions toolbar
-- [/] Menu Dishes management page (`/dashboard/menu`)
-  - [ ] Dish listing table with thumbnail, price, category, and status
-  - [ ] Quick availability switch toggle per dish
-  - [ ] Add/Edit dish modal form with photo upload
-  - [ ] Attach 3D model modal with AR toggle
-  - [ ] Delete dish with confirmation modal
+- [x] Menu Dishes management page (`/dashboard/menu`)
+  - [x] Dual-view architecture: Card Grid view (with 3D status chip) and Data Table view
+  - [x] Instant availability toggle switch per dish ("In Stock" / "86'd")
+  - [x] Quick inline price editing with instant server persistence
+  - [x] Category grouping with display order adjustment handles
+  - [x] Slide-over "Add / Edit Dish" drawer with basic details, dietary chips, photo upload, and 3D dropzone
+  - [x] In-browser 3D & Augmented Reality diagnostic preview modal
+  - [x] Dish duplicate and delete actions with confirmation
+  - [x] Live kitchen sync tip banner and toast notification feedback
 - [/] Categories management page (`/dashboard/categories`)
   - [ ] Category listing with dish counters
   - [ ] Add/Edit category dialog
